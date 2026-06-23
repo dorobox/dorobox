@@ -1,47 +1,649 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>My First Webpage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOROs Blood Chemistry Monitor</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #0f172a;
-      color: #fff;
-      text-align: center;
-      padding: 50px;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    header p {
+      font-size: 1.2em;
+      opacity: 0.9;
+    }
+
+    .connection-status {
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      margin-top: 10px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .connection-status.connected {
+      background: #10b981;
+    }
+
+    .connection-status.disconnected {
+      background: #ef4444;
+    }
+
+    .connection-status.connecting {
+      background: #f59e0b;
+    }
+
     .card {
-      background: #1e293b;
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .card h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 1.8em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #333;
+      font-size: 0.9em;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-group small {
+      color: #666;
+      margin-top: 3px;
+      font-size: 0.85em;
+    }
+
+    .btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      margin-left: 10px;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-delete {
+      background: #ef4444;
+      color: white;
+      padding: 5px 10px;
+      font-size: 0.85em;
+    }
+
+    .btn-delete:hover {
+      background: #dc2626;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      overflow-x: auto;
+      display: block;
+    }
+
+    .results-table table {
+      width: 100%;
+      min-width: 1200px;
+    }
+
+    .results-table th,
+    .results-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .results-table th {
+      background: #f8f9fa;
+      color: #667eea;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    .results-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .status-normal {
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .status-high {
+      color: #ef4444;
+      font-weight: 600;
+    }
+
+    .status-low {
+      color: #f59e0b;
+      font-weight: 600;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
       padding: 20px;
       border-radius: 10px;
-      display: inline-block;
+      text-align: center;
     }
-    button {
-      background: #38bdf8;
-      border: none;
-      padding: 10px 20px;
-      color: black;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
+
+    .stat-card h3 {
+      font-size: 2em;
+      margin-bottom: 5px;
+    }
+
+    .stat-card p {
+      opacity: 0.9;
+      font-size: 0.9em;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      border: 1px solid #10b981;
+      color: #065f46;
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      border: 1px solid #3b82f6;
+      color: #1e40af;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .btn-secondary {
+        margin-left: 0;
+      }
+
+      .results-table {
+        font-size: 0.85em;
+      }
+
+      .results-table th,
+      .results-table td {
+        padding: 8px;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <h1>🩸 DOROs Blood Chemistry Monitor</h1>
+      <p>Real-time tracking with your barkada!</p>
+      <div class="connection-status connecting" id="connectionStatus">
+        <span id="statusText">🟡 Connecting...</span>
+      </div>
+    </header>
 
-  <div class="card">
-    <h1>Hello DOROs 👋</h1>
-    <p>We have a network!</p>
-    <button onclick="sayHello()">Pakz me</button>
+    <div class="card">
+      <h2>📊 Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3 id="totalRecords">0</h3>
+          <p>Total Records</p>
+        </div>
+        <div class="stat-card">
+          <h3 id="totalMembers">0</h3>
+          <p>Members</p>
+        </div>
+        <div class="stat-card">
+          <h3 id="latestDate">-</h3>
+          <p>Latest Test</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>➕ Add New Blood Chemistry Result</h2>
+      <form id="bloodChemForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="memberName">Member Name *</label>
+            <input type="text" id="memberName" required placeholder="Enter name">
+          </div>
+
+          <div class="form-group">
+            <label for="testDate">Test Date *</label>
+            <input type="date" id="testDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="glucose">Glucose (mg/dL)</label>
+            <input type="number" id="glucose" step="0.1" placeholder="70-100">
+            <small>Normal: 70-100 mg/dL</small>
+          </div>
+
+          <div class="form-group">
+            <label for="cholesterol">Total Cholesterol (mg/dL)</label>
+            <input type="number" id="cholesterol" step="0.1" placeholder="< 200">
+            <small>Normal: < 200 mg/dL</small>
+          </div>
+
+          <div class="form-group">
+            <label for="hdl">HDL (Good Cholesterol) (mg/dL)</label>
+            <input type="number" id="hdl" step="0.1" placeholder="> 40">
+            <small>Normal: > 40 mg/dL</small>
+          </div>
+
+          <div class="form-group">
+            <label for="ldl">LDL (Bad Cholesterol) (mg/dL)</label>
+            <input type="number" id="ldl" step="0.1" placeholder="< 100">
+            <small>Normal: < 100 mg/dL</small>
+          </div>
+
+          <div class="form-group">
+            <label for="triglycerides">Triglycerides (mg/dL)</label>
+            <input type="number" id="triglycerides" step="0.1" placeholder="< 150">
+            <small>Normal: < 150 mg/dL</small>
+          </div>
+
+          <div class="form-group">
+            <label for="creatinine">Creatinine (mg/dL)</label>
+            <input type="number" id="creatinine" step="0.01" placeholder="0.7-1.3">
+            <small>Normal: 0.7-1.3 mg/dL</small>
+          </div>
+
+          <div class="form-group">
+            <label for="uricAcid">Uric Acid (mg/dL)</label>
+            <input type="number" id="uricAcid" step="0.1" placeholder="3.5-7.2">
+            <small>Normal: 3.5-7.2 mg/dL</small>
+          </div>
+
+          <div class="form-group">
+            <label for="sgpt">SGPT/ALT (U/L)</label>
+            <input type="number" id="sgpt" step="0.1" placeholder="7-56">
+            <small>Normal: 7-56 U/L</small>
+          </div>
+
+          <div class="form-group">
+            <label for="sgot">SGOT/AST (U/L)</label>
+            <input type="number" id="sgot" step="0.1" placeholder="10-40">
+            <small>Normal: 10-40 U/L</small>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Notes</label>
+            <input type="text" id="notes" placeholder="Any additional notes">
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="btn btn-primary">💾 Save Result</button>
+          <button type="button" class="btn btn-secondary" onclick="clearForm()">🔄 Clear Form</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>📋 Blood Chemistry Records (Real-time)</h2>
+      <div class="alert alert-info">
+        <strong>ℹ️ Real-time Sync:</strong> All changes are automatically synced across all devices. Everyone in your barkada can see the updates instantly!
+      </div>
+      <div id="resultsContainer">
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p>Loading records...</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script>
-    function sayHello() {
-      alert("Tinulu ing sabo 😄");
-    }
-  </script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
+  <script>
+    // Firebase Configuration (Pre-configured for DOROs)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCfVKaMzVHZzAQ-ke5obYcNMElj-1JMj6k",
+      authDomain: "dorobox-efa6e.firebaseapp.com",
+      databaseURL: "https://dorobox-efa6e-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "dorobox-efa6e",
+      storageBucket: "dorobox-efa6e.firebasestorage.app",
+      messagingSenderId: "758735585782",
+      appId: "1:758735585782:web:e14dcff33376ef5a87c7d7",
+      measurementId: "G-0D77S0B1DC"
+    };
+
+    let database = null;
+    let bloodChemRecords = [];
+
+    // Initialize Firebase
+    function initializeFirebase() {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+        
+        // Update connection status
+        updateConnectionStatus('connecting');
+        
+        // Set up real-time listener
+        setupRealtimeListener();
+        
+        // Set today's date as default
+        document.getElementById('testDate').valueAsDate = new Date();
+        
+        console.log('✅ Firebase initialized successfully!');
+      } catch (e) {
+        console.error('Firebase initialization error:', e);
+        alert('❌ Error initializing Firebase. Please check your internet connection.');
+        updateConnectionStatus('disconnected');
+      }
+    }
+
+    // Update connection status
+    function updateConnectionStatus(status) {
+      const statusElement = document.getElementById('connectionStatus');
+      const statusText = document.getElementById('statusText');
+      
+      statusElement.className = 'connection-status ' + status;
+      
+      switch(status) {
+        case 'connected':
+          statusText.textContent = '🟢 Connected';
+          break;
+        case 'disconnected':
+          statusText.textContent = '🔴 Disconnected';
+          break;
+        case 'connecting':
+          statusText.textContent = '🟡 Connecting...';
+          break;
+      }
+    }
+
+    // Setup real-time listener
+    function setupRealtimeListener() {
+      const recordsRef = database.ref('bloodChemRecords');
+      
+      recordsRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        bloodChemRecords = data ? Object.values(data) : [];
+        
+        // Sort by date (newest first)
+        bloodChemRecords.sort((a, b) => new Date(b.testDate) - new Date(a.testDate));
+        
+        displayRecords();
+        updateStats();
+      });
+
+      // Monitor connection status
+      const connectedRef = database.ref('.info/connected');
+      connectedRef.on('value', (snapshot) => {
+        if (snapshot.val() === true) {
+          updateConnectionStatus('connected');
+        } else {
+          updateConnectionStatus('disconnected');
+        }
+      });
+    }
+
+    // Form submission
+    document.getElementById('bloodChemForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      if (!database) {
+        alert('❌ Firebase not initialized! Please refresh the page.');
+        return;
+      }
+
+      const record = {
+        id: Date.now().toString(),
+        memberName: document.getElementById('memberName').value,
+        testDate: document.getElementById('testDate').value,
+        glucose: parseFloat(document.getElementById('glucose').value) || null,
+        cholesterol: parseFloat(document.getElementById('cholesterol').value) || null,
+        hdl: parseFloat(document.getElementById('hdl').value) || null,
+        ldl: parseFloat(document.getElementById('ldl').value) || null,
+        triglycerides: parseFloat(document.getElementById('triglycerides').value) || null,
+        creatinine: parseFloat(document.getElementById('creatinine').value) || null,
+        uricAcid: parseFloat(document.getElementById('uricAcid').value) || null,
+        sgpt: parseFloat(document.getElementById('sgpt').value) || null,
+        sgot: parseFloat(document.getElementById('sgot').value) || null,
+        notes: document.getElementById('notes').value,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      // Save to Firebase
+      database.ref('bloodChemRecords/' + record.id).set(record)
+        .then(() => {
+          alert('✅ Blood chemistry result saved and synced!');
+          clearForm();
+        })
+        .catch((error) => {
+          alert('❌ Error saving data: ' + error.message);
+          console.error('Save error:', error);
+        });
+    });
+
+    function clearForm() {
+      document.getElementById('bloodChemForm').reset();
+      document.getElementById('testDate').valueAsDate = new Date();
+    }
+
+    function getStatus(value, min, max, reverse = false) {
+      if (value === null) return '-';
+      
+      if (reverse) {
+        if (value < min) return '<span class="status-low">Low</span>';
+        if (value > max) return '<span class="status-high">High</span>';
+        return '<span class="status-normal">Normal</span>';
+      } else {
+        if (value < min) return '<span class="status-low">Low</span>';
+        if (value > max) return '<span class="status-high">High</span>';
+        return '<span class="status-normal">Normal</span>';
+      }
+    }
+
+    function displayRecords() {
+      const container = document.getElementById('resultsContainer');
+
+      if (bloodChemRecords.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p>No records yet. Add your first blood chemistry result above!</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '<div class="results-table"><table><thead><tr>';
+      html += '<th>Date</th>';
+      html += '<th>Member</th>';
+      html += '<th>Glucose</th>';
+      html += '<th>Cholesterol</th>';
+      html += '<th>HDL</th>';
+      html += '<th>LDL</th>';
+      html += '<th>Triglycerides</th>';
+      html += '<th>Creatinine</th>';
+      html += '<th>Uric Acid</th>';
+      html += '<th>SGPT</th>';
+      html += '<th>SGOT</th>';
+      html += '<th>Notes</th>';
+      html += '<th>Action</th>';
+      html += '</tr></thead><tbody>';
+
+      bloodChemRecords.forEach(record => {
+        html += '<tr>';
+        html += `<td>${new Date(record.testDate).toLocaleDateString()}</td>`;
+        html += `<td><strong>${record.memberName}</strong></td>`;
+        html += `<td>${record.glucose || '-'} ${getStatus(record.glucose, 70, 100)}</td>`;
+        html += `<td>${record.cholesterol || '-'} ${getStatus(record.cholesterol, 0, 200)}</td>`;
+        html += `<td>${record.hdl || '-'} ${getStatus(record.hdl, 40, 999, true)}</td>`;
+        html += `<td>${record.ldl || '-'} ${getStatus(record.ldl, 0, 100)}</td>`;
+        html += `<td>${record.triglycerides || '-'} ${getStatus(record.triglycerides, 0, 150)}</td>`;
+        html += `<td>${record.creatinine || '-'} ${getStatus(record.creatinine, 0.7, 1.3)}</td>`;
+        html += `<td>${record.uricAcid || '-'} ${getStatus(record.uricAcid, 3.5, 7.2)}</td>`;
+        html += `<td>${record.sgpt || '-'} ${getStatus(record.sgpt, 7, 56)}</td>`;
+        html += `<td>${record.sgot || '-'} ${getStatus(record.sgot, 10, 40)}</td>`;
+        html += `<td>${record.notes || '-'}</td>`;
+        html += `<td><button class="btn btn-delete" onclick="deleteRecord('${record.id}')">🗑️ Delete</button></td>`;
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    }
+
+    function deleteRecord(id) {
+      if (confirm('Are you sure you want to delete this record? This will be synced to all devices.')) {
+        database.ref('bloodChemRecords/' + id).remove()
+          .then(() => {
+            alert('✅ Record deleted and synced!');
+          })
+          .catch((error) => {
+            alert('❌ Error deleting record: ' + error.message);
+            console.error('Delete error:', error);
+          });
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('totalRecords').textContent = bloodChemRecords.length;
+      
+      const uniqueMembers = [...new Set(bloodChemRecords.map(r => r.memberName))];
+      document.getElementById('totalMembers').textContent = uniqueMembers.length;
+
+      if (bloodChemRecords.length > 0) {
+        const latestDate = new Date(bloodChemRecords[0].testDate).toLocaleDateString();
+        document.getElementById('latestDate').textContent = latestDate;
+      } else {
+        document.getElementById('latestDate').textContent = '-';
+      }
+    }
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      initializeFirebase();
+    });
+  </script>
 </body>
 </html>
