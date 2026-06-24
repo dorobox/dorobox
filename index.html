@@ -449,8 +449,9 @@
         <form id="bloodChemForm">
           <div class="form-grid">
             <div class="form-group">
-              <label for="memberName">Member Name *</label>
-              <input type="text" id="memberName" required placeholder="Enter name">
+              <label for="memberName">Member Name</label>
+              <input type="text" id="memberName" readonly style="background: #f0f0f0; cursor: not-allowed;">
+              <small>Auto-filled from your profile</small>
             </div>
 
             <div class="form-group">
@@ -692,11 +693,23 @@
       document.getElementById('authSection').classList.add('hidden');
       document.getElementById('mainContent').classList.remove('hidden');
       document.getElementById('testDate').valueAsDate = new Date();
+      
+      // Auto-fill member name
+      if (currentUser) {
+        const displayName = currentUser.displayName || currentUser.email.split('@')[0];
+        document.getElementById('memberName').value = displayName;
+      }
     }
 
     function updateUserInfo(email) {
       document.getElementById('userInfo').classList.remove('hidden');
       document.getElementById('userEmail').textContent = '👤 ' + email;
+      
+      // Update member name field
+      if (currentUser) {
+        const displayName = currentUser.displayName || currentUser.email.split('@')[0];
+        document.getElementById('memberName').value = displayName;
+      }
     }
 
     // Update connection status
@@ -762,8 +775,12 @@
         return;
       }
 
+      // Check if editing or creating new
+      const editingId = this.dataset.editingId;
+      const recordId = editingId || Date.now().toString();
+
       const record = {
-        id: Date.now().toString(),
+        id: recordId,
         userId: currentUser.uid,
         userEmail: currentUser.email,
         memberName: currentUser.displayName || currentUser.email.split('@')[0],
@@ -785,7 +802,11 @@
 
       database.ref('bloodChemRecords/' + record.id).set(record)
         .then(() => {
-          alert('✅ Blood chemistry result saved and synced!');
+          if (editingId) {
+            alert('✅ Record updated and synced!');
+          } else {
+            alert('✅ Blood chemistry result saved and synced!');
+          }
           clearForm();
         })
         .catch((error) => {
@@ -795,8 +816,20 @@
     });
 
     function clearForm() {
-      document.getElementById('bloodChemForm').reset();
+      const form = document.getElementById('bloodChemForm');
+      form.reset();
+      form.removeAttribute('data-editing-id');
       document.getElementById('testDate').valueAsDate = new Date();
+      
+      // Reset button text
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = '💾 Save Result';
+      
+      // Restore member name
+      if (currentUser) {
+        const displayName = currentUser.displayName || currentUser.email.split('@')[0];
+        document.getElementById('memberName').value = displayName;
+      }
     }
 
     function getStatus(value, min, max, reverse = false) {
@@ -863,9 +896,12 @@
         html += `<td>${record.potassium || '-'} ${getStatus(record.potassium, 3.5, 5.0)}</td>`;
         html += `<td>${record.notes || '-'}</td>`;
         
-        // Only show delete button if user owns the record
+        // Only show edit/delete buttons if user owns the record
         if (currentUser && record.userId === currentUser.uid) {
-          html += `<td><button class="btn btn-delete" onclick="deleteRecord('${record.id}')">🗑️ Delete</button></td>`;
+          html += `<td style="white-space: nowrap;">
+            <button class="btn btn-primary" onclick="editRecord('${record.id}')" style="padding: 5px 10px; font-size: 0.85em; margin-right: 5px;">✏️ Edit</button>
+            <button class="btn btn-delete" onclick="deleteRecord('${record.id}')">🗑️ Delete</button>
+          </td>`;
         } else {
           html += `<td>-</td>`;
         }
@@ -874,6 +910,53 @@
 
       html += '</tbody></table></div>';
       container.innerHTML = html;
+    }
+
+    function editRecord(id) {
+      if (!currentUser) {
+        alert('❌ Please login first!');
+        return;
+      }
+
+      // Find the record
+      const record = bloodChemRecords.find(r => r.id === id);
+      if (!record) {
+        alert('❌ Record not found!');
+        return;
+      }
+
+      // Check if user owns the record
+      if (record.userId !== currentUser.uid) {
+        alert('❌ You can only edit your own records!');
+        return;
+      }
+
+      // Populate form with record data
+      document.getElementById('testDate').value = record.testDate;
+      document.getElementById('glucose').value = record.glucose || '';
+      document.getElementById('cholesterol').value = record.cholesterol || '';
+      document.getElementById('hdl').value = record.hdl || '';
+      document.getElementById('ldl').value = record.ldl || '';
+      document.getElementById('triglycerides').value = record.triglycerides || '';
+      document.getElementById('creatinine').value = record.creatinine || '';
+      document.getElementById('uricAcid').value = record.uricAcid || '';
+      document.getElementById('sgpt').value = record.sgpt || '';
+      document.getElementById('sgot').value = record.sgot || '';
+      document.getElementById('hba1c').value = record.hba1c || '';
+      document.getElementById('potassium').value = record.potassium || '';
+      document.getElementById('notes').value = record.notes || '';
+
+      // Store the record ID for updating
+      document.getElementById('bloodChemForm').dataset.editingId = id;
+      
+      // Change button text
+      const submitBtn = document.querySelector('#bloodChemForm button[type="submit"]');
+      submitBtn.textContent = '💾 Update Result';
+      
+      // Scroll to form
+      document.getElementById('addRecordCard').scrollIntoView({ behavior: 'smooth' });
+      
+      alert('✏️ Editing record. Update the values and click "Update Result".');
     }
 
     function deleteRecord(id) {
