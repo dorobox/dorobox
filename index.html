@@ -61,6 +61,17 @@
       background: #f59e0b;
     }
 
+    .user-info {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      margin-top: 10px;
+      background: rgba(255,255,255,0.3);
+      color: white;
+      margin-left: 10px;
+    }
+
     .card {
       background: white;
       border-radius: 15px;
@@ -154,6 +165,13 @@
 
     .btn-delete:hover {
       background: #dc2626;
+    }
+
+    .btn-logout {
+      background: #ef4444;
+      color: white;
+      padding: 8px 20px;
+      font-size: 0.9em;
     }
 
     .button-group {
@@ -265,6 +283,44 @@
       color: #1e40af;
     }
 
+    .alert-warning {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+    }
+
+    .login-container {
+      max-width: 400px;
+      margin: 50px auto;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 12px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .auth-tab.active {
+      background: white;
+      color: #667eea;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
     @media (max-width: 768px) {
       .form-grid {
         grid-template-columns: 1fr;
@@ -294,133 +350,197 @@
     <header>
       <h1>🩸 DOROs Blood Chemistry Monitor</h1>
       <p>Real-time tracking with your barkada!</p>
-      <div class="connection-status connecting" id="connectionStatus">
-        <span id="statusText">🟡 Connecting...</span>
+      <div>
+        <span class="connection-status connecting" id="connectionStatus">
+          <span id="statusText">🟡 Connecting...</span>
+        </span>
+        <span class="user-info hidden" id="userInfo">
+          <span id="userEmail"></span>
+          <button class="btn btn-logout" onclick="logout()" style="margin-left: 10px;">Logout</button>
+        </span>
       </div>
     </header>
 
-    <div class="card">
-      <h2>📊 Statistics</h2>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <h3 id="totalRecords">0</h3>
-          <p>Total Records</p>
-        </div>
-        <div class="stat-card">
-          <h3 id="totalMembers">0</h3>
-          <p>Members</p>
-        </div>
-        <div class="stat-card">
-          <h3 id="latestDate">-</h3>
-          <p>Latest Test</p>
+    <!-- Login/Signup Form -->
+    <div id="authSection" class="hidden">
+      <div class="login-container">
+        <div class="card">
+          <h2>🔐 Login / Sign Up</h2>
+          <div class="alert alert-info">
+            <strong>ℹ️ Para sa Users:</strong> Mag-login para makapag-add at mag-edit ng sarili mong records. Pwede pa rin mag-view kahit hindi naka-login!
+          </div>
+          
+          <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+            <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+          </div>
+
+          <!-- Login Form -->
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="loginEmail">Email</label>
+              <input type="email" id="loginEmail" required placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <input type="password" id="loginPassword" required placeholder="Password">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">🔓 Login</button>
+          </form>
+
+          <!-- Signup Form -->
+          <form id="signupForm" class="hidden">
+            <div class="form-group">
+              <label for="signupEmail">Email</label>
+              <input type="email" id="signupEmail" required placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+              <label for="signupPassword">Password</label>
+              <input type="password" id="signupPassword" required placeholder="Minimum 6 characters">
+              <small>Minimum 6 characters</small>
+            </div>
+            <div class="form-group">
+              <label for="signupName">Display Name</label>
+              <input type="text" id="signupName" required placeholder="Your Name">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">📝 Sign Up</button>
+          </form>
+
+          <div style="text-align: center; margin-top: 20px;">
+            <button class="btn btn-secondary" onclick="continueAsGuest()">👁️ Continue as Guest (View Only)</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <h2>➕ Add New Blood Chemistry Result</h2>
-      <form id="bloodChemForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="memberName">Member Name *</label>
-            <input type="text" id="memberName" required placeholder="Enter name">
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden">
+      <div class="card">
+        <h2>📊 Statistics</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3 id="totalRecords">0</h3>
+            <p>Total Records</p>
           </div>
-
-          <div class="form-group">
-            <label for="testDate">Test Date *</label>
-            <input type="date" id="testDate" required>
+          <div class="stat-card">
+            <h3 id="totalMembers">0</h3>
+            <p>Members</p>
           </div>
-
-          <div class="form-group">
-            <label for="glucose">FBS (mg/dL)</label>
-            <input type="number" id="glucose" step="0.01" placeholder="70-100">
-            <small>Normal: 70-100 mg/dL</small>
-          </div>
-
-          <div class="form-group">
-            <label for="cholesterol">Total Cholesterol (mg/dL)</label>
-            <input type="number" id="cholesterol" step="0.01" placeholder="< 200">
-            <small>Normal: < 200 mg/dL</small>
-          </div>
-
-          <div class="form-group">
-            <label for="hdl">HDL (Good Cholesterol) (mg/dL)</label>
-            <input type="number" id="hdl" step="0.01" placeholder="> 40">
-            <small>Normal: > 40 mg/dL</small>
-          </div>
-
-          <div class="form-group">
-            <label for="ldl">LDL (Bad Cholesterol) (mg/dL)</label>
-            <input type="number" id="ldl" step="0.01" placeholder="< 100">
-            <small>Normal: < 100 mg/dL</small>
-          </div>
-
-          <div class="form-group">
-            <label for="triglycerides">Triglycerides (mg/dL)</label>
-            <input type="number" id="triglycerides" step="0.01" placeholder="< 150">
-            <small>Normal: < 150 mg/dL</small>
-          </div>
-
-          <div class="form-group">
-            <label for="creatinine">Creatinine (mg/dL)</label>
-            <input type="number" id="creatinine" step="0.01" placeholder="0.7-1.3">
-            <small>Normal: 0.7-1.3 mg/dL</small>
-          </div>
-
-          <div class="form-group">
-            <label for="uricAcid">Uric Acid (mg/dL)</label>
-            <input type="number" id="uricAcid" step="0.01" placeholder="3.5-7.2">
-            <small>Normal: 3.5-7.2 mg/dL</small>
-          </div>
-
-          <div class="form-group">
-            <label for="sgpt">SGPT/ALT (U/L)</label>
-            <input type="number" id="sgpt" step="0.01" placeholder="7-56">
-            <small>Normal: 7-56 U/L</small>
-          </div>
-
-          <div class="form-group">
-            <label for="sgot">SGOT/AST (U/L)</label>
-            <input type="number" id="sgot" step="0.01" placeholder="10-40">
-            <small>Normal: 10-40 U/L</small>
-          </div>
-
-          <div class="form-group">
-            <label for="hba1c">HbA1C (%)</label>
-            <input type="number" id="hba1c" step="0.01" placeholder="4.0-5.6">
-            <small>Normal: 4.0-5.6%</small>
-          </div>
-
-          <div class="form-group">
-            <label for="potassium">Potassium (mmol/L)</label>
-            <input type="number" id="potassium" step="0.01" placeholder="3.5-5.0">
-            <small>Normal: 3.5-5.0 mmol/L</small>
-          </div>
-
-          <div class="form-group">
-            <label for="notes">Notes</label>
-            <input type="text" id="notes" placeholder="Any additional notes">
+          <div class="stat-card">
+            <h3 id="latestDate">-</h3>
+            <p>Latest Test</p>
           </div>
         </div>
-
-        <div class="button-group">
-          <button type="submit" class="btn btn-primary">💾 Save Result</button>
-          <button type="button" class="btn btn-secondary" onclick="clearForm()">🔄 Clear Form</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="card">
-      <h2>📋 Blood Chemistry Records (Real-time)</h2>
-      <div class="alert alert-info">
-        <strong>ℹ️ Real-time Sync:</strong> All changes are automatically synced across all devices. Everyone in your barkada can see the updates instantly!
       </div>
-      <div id="resultsContainer">
-        <div class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <p>Loading records...</p>
+
+      <div class="card" id="addRecordCard">
+        <h2>➕ Add New Blood Chemistry Result</h2>
+        <div class="alert alert-warning" id="guestWarning" style="display: none;">
+          <strong>⚠️ Guest Mode:</strong> Mag-login para makapag-add ng records!
+        </div>
+        <form id="bloodChemForm">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="memberName">Member Name *</label>
+              <input type="text" id="memberName" required placeholder="Enter name">
+            </div>
+
+            <div class="form-group">
+              <label for="testDate">Test Date *</label>
+              <input type="date" id="testDate" required>
+            </div>
+
+            <div class="form-group">
+              <label for="glucose">FBS (mg/dL)</label>
+              <input type="number" id="glucose" step="0.01" placeholder="70-100">
+              <small>Normal: 70-100 mg/dL</small>
+            </div>
+
+            <div class="form-group">
+              <label for="cholesterol">Total Cholesterol (mg/dL)</label>
+              <input type="number" id="cholesterol" step="0.01" placeholder="< 200">
+              <small>Normal: < 200 mg/dL</small>
+            </div>
+
+            <div class="form-group">
+              <label for="hdl">HDL (Good Cholesterol) (mg/dL)</label>
+              <input type="number" id="hdl" step="0.01" placeholder="> 40">
+              <small>Normal: > 40 mg/dL</small>
+            </div>
+
+            <div class="form-group">
+              <label for="ldl">LDL (Bad Cholesterol) (mg/dL)</label>
+              <input type="number" id="ldl" step="0.01" placeholder="< 100">
+              <small>Normal: < 100 mg/dL</small>
+            </div>
+
+            <div class="form-group">
+              <label for="triglycerides">Triglycerides (mg/dL)</label>
+              <input type="number" id="triglycerides" step="0.01" placeholder="< 150">
+              <small>Normal: < 150 mg/dL</small>
+            </div>
+
+            <div class="form-group">
+              <label for="creatinine">Creatinine (mg/dL)</label>
+              <input type="number" id="creatinine" step="0.01" placeholder="0.7-1.3">
+              <small>Normal: 0.7-1.3 mg/dL</small>
+            </div>
+
+            <div class="form-group">
+              <label for="uricAcid">Uric Acid (mg/dL)</label>
+              <input type="number" id="uricAcid" step="0.01" placeholder="3.5-7.2">
+              <small>Normal: 3.5-7.2 mg/dL</small>
+            </div>
+
+            <div class="form-group">
+              <label for="sgpt">SGPT/ALT (U/L)</label>
+              <input type="number" id="sgpt" step="0.01" placeholder="7-56">
+              <small>Normal: 7-56 U/L</small>
+            </div>
+
+            <div class="form-group">
+              <label for="sgot">SGOT/AST (U/L)</label>
+              <input type="number" id="sgot" step="0.01" placeholder="10-40">
+              <small>Normal: 10-40 U/L</small>
+            </div>
+
+            <div class="form-group">
+              <label for="hba1c">HbA1C (%)</label>
+              <input type="number" id="hba1c" step="0.01" placeholder="4.0-5.6">
+              <small>Normal: 4.0-5.6%</small>
+            </div>
+
+            <div class="form-group">
+              <label for="potassium">Potassium (mmol/L)</label>
+              <input type="number" id="potassium" step="0.01" placeholder="3.5-5.0">
+              <small>Normal: 3.5-5.0 mmol/L</small>
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <input type="text" id="notes" placeholder="Any additional notes">
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn btn-primary">💾 Save Result</button>
+            <button type="button" class="btn btn-secondary" onclick="clearForm()">🔄 Clear Form</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>📋 Blood Chemistry Records (Real-time)</h2>
+        <div class="alert alert-info">
+          <strong>ℹ️ Real-time Sync:</strong> All changes are automatically synced across all devices. Everyone in your barkada can see the updates instantly!
+        </div>
+        <div id="resultsContainer">
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p>Loading records...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -429,9 +549,10 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
   <script>
-    // Firebase Configuration (Pre-configured for DOROs)
+    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCfVKaMzVHZzAQ-ke5obYcNMElj-1JMj6k",
       authDomain: "dorobox-efa6e.firebaseapp.com",
@@ -444,6 +565,9 @@
     };
 
     let database = null;
+    let auth = null;
+    let currentUser = null;
+    let isGuest = false;
     let bloodChemRecords = [];
 
     // Initialize Firebase
@@ -451,15 +575,25 @@
       try {
         firebase.initializeApp(firebaseConfig);
         database = firebase.database();
+        auth = firebase.auth();
         
-        // Update connection status
         updateConnectionStatus('connecting');
         
-        // Set up real-time listener
-        setupRealtimeListener();
-        
-        // Set today's date as default
-        document.getElementById('testDate').valueAsDate = new Date();
+        // Monitor auth state
+        auth.onAuthStateChanged((user) => {
+          if (user) {
+            currentUser = user;
+            isGuest = false;
+            showMainContent();
+            updateUserInfo(user.email);
+            setupRealtimeListener();
+          } else {
+            currentUser = null;
+            if (!isGuest) {
+              showAuthSection();
+            }
+          }
+        });
         
         console.log('✅ Firebase initialized successfully!');
       } catch (e) {
@@ -467,6 +601,94 @@
         alert('❌ Error initializing Firebase. Please check your internet connection.');
         updateConnectionStatus('disconnected');
       }
+    }
+
+    // Auth Tab Switching
+    function switchAuthTab(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
+      const tabs = document.querySelectorAll('.auth-tab');
+      
+      tabs.forEach(t => t.classList.remove('active'));
+      
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        signupForm.classList.add('hidden');
+        tabs[0].classList.add('active');
+      } else {
+        loginForm.classList.add('hidden');
+        signupForm.classList.remove('hidden');
+        tabs[1].classList.add('active');
+      }
+    }
+
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        alert('✅ Login successful!');
+      } catch (error) {
+        alert('❌ Login failed: ' + error.message);
+      }
+    });
+
+    // Signup
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+      const name = document.getElementById('signupName').value;
+      
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.updateProfile({ displayName: name });
+        alert('✅ Account created successfully!');
+      } catch (error) {
+        alert('❌ Signup failed: ' + error.message);
+      }
+    });
+
+    // Logout
+    function logout() {
+      auth.signOut().then(() => {
+        alert('✅ Logged out successfully!');
+        isGuest = false;
+        showAuthSection();
+      });
+    }
+
+    // Continue as Guest
+    function continueAsGuest() {
+      isGuest = true;
+      showMainContent();
+      setupRealtimeListener();
+      document.getElementById('guestWarning').style.display = 'block';
+      document.getElementById('bloodChemForm').querySelectorAll('input, button').forEach(el => {
+        if (el.type !== 'button' || el.textContent.includes('Save')) {
+          el.disabled = true;
+        }
+      });
+    }
+
+    // Show/Hide Sections
+    function showAuthSection() {
+      document.getElementById('authSection').classList.remove('hidden');
+      document.getElementById('mainContent').classList.add('hidden');
+    }
+
+    function showMainContent() {
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+      document.getElementById('testDate').valueAsDate = new Date();
+    }
+
+    function updateUserInfo(email) {
+      document.getElementById('userInfo').classList.remove('hidden');
+      document.getElementById('userEmail').textContent = '👤 ' + email;
     }
 
     // Update connection status
@@ -497,14 +719,12 @@
         const data = snapshot.val();
         bloodChemRecords = data ? Object.values(data) : [];
         
-        // Sort by date (newest first)
         bloodChemRecords.sort((a, b) => new Date(b.testDate) - new Date(a.testDate));
         
         displayRecords();
         updateStats();
       });
 
-      // Monitor connection status
       const connectedRef = database.ref('.info/connected');
       connectedRef.on('value', (snapshot) => {
         if (snapshot.val() === true) {
@@ -519,6 +739,16 @@
     document.getElementById('bloodChemForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
+      if (isGuest) {
+        alert('❌ Mag-login muna para makapag-add ng records!');
+        return;
+      }
+
+      if (!currentUser) {
+        alert('❌ Please login first!');
+        return;
+      }
+
       if (!database) {
         alert('❌ Firebase not initialized! Please refresh the page.');
         return;
@@ -526,6 +756,8 @@
 
       const record = {
         id: Date.now().toString(),
+        userId: currentUser.uid,
+        userEmail: currentUser.email,
         memberName: document.getElementById('memberName').value,
         testDate: document.getElementById('testDate').value,
         glucose: parseFloat(document.getElementById('glucose').value) || null,
@@ -543,7 +775,6 @@
         timestamp: firebase.database.ServerValue.TIMESTAMP
       };
 
-      // Save to Firebase
       database.ref('bloodChemRecords/' + record.id).set(record)
         .then(() => {
           alert('✅ Blood chemistry result saved and synced!');
@@ -623,7 +854,13 @@
         html += `<td>${record.hba1c || '-'} ${getStatus(record.hba1c, 4.0, 5.6)}</td>`;
         html += `<td>${record.potassium || '-'} ${getStatus(record.potassium, 3.5, 5.0)}</td>`;
         html += `<td>${record.notes || '-'}</td>`;
-        html += `<td><button class="btn btn-delete" onclick="deleteRecord('${record.id}')">🗑️ Delete</button></td>`;
+        
+        // Only show delete button if user owns the record
+        if (currentUser && record.userId === currentUser.uid) {
+          html += `<td><button class="btn btn-delete" onclick="deleteRecord('${record.id}')">🗑️ Delete</button></td>`;
+        } else {
+          html += `<td>-</td>`;
+        }
         html += '</tr>';
       });
 
@@ -632,7 +869,12 @@
     }
 
     function deleteRecord(id) {
-      if (confirm('Are you sure you want to delete this record? This will be synced to all devices.')) {
+      if (!currentUser) {
+        alert('❌ Please login first!');
+        return;
+      }
+
+      if (confirm('Are you sure you want to delete this record?')) {
         database.ref('bloodChemRecords/' + id).remove()
           .then(() => {
             alert('✅ Record deleted and synced!');
