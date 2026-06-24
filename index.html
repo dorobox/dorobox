@@ -289,6 +289,142 @@
       color: #92400e;
     }
 
+    .alert-danger {
+      background: #fee2e2;
+      border: 1px solid #ef4444;
+      color: #991b1b;
+    }
+
+    .health-analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .member-analysis {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      border-left: 4px solid #667eea;
+    }
+
+    .member-analysis h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.3em;
+    }
+
+    .analysis-section {
+      margin-bottom: 15px;
+    }
+
+    .analysis-section h4 {
+      color: #333;
+      font-size: 1em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .analysis-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: white;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 0.9em;
+    }
+
+    .analysis-item .label {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .analysis-item .value {
+      font-weight: 600;
+    }
+
+    .recommendation {
+      background: #e0f2fe;
+      border-left: 3px solid #0284c7;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    .recommendation h4 {
+      color: #0284c7;
+      font-size: 0.95em;
+      margin-bottom: 8px;
+    }
+
+    .recommendation ul {
+      margin-left: 20px;
+      color: #0c4a6e;
+    }
+
+    .recommendation li {
+      margin-bottom: 5px;
+      font-size: 0.9em;
+    }
+
+    .health-score {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 1.1em;
+      margin-bottom: 10px;
+    }
+
+    .health-score.excellent {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .health-score.good {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .health-score.fair {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .health-score.poor {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .trend-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.85em;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .trend-up {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .trend-down {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .trend-stable {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
     .login-container {
       max-width: 400px;
       margin: 50px auto;
@@ -437,6 +573,18 @@
           <div class="stat-card">
             <h3 id="latestDate">-</h3>
             <p>Latest Test</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="aiAnalysisCard">
+        <h2>🤖 AI Health Analysis & Recommendations</h2>
+        <div class="alert alert-info">
+          <strong>ℹ️ AI-Powered Insights:</strong> Comprehensive analysis ng latest results ng bawat member with personalized health recommendations.
+        </div>
+        <div id="healthAnalysisContainer">
+          <div class="empty-state">
+            <p>Loading AI analysis...</p>
           </div>
         </div>
       </div>
@@ -838,6 +986,362 @@
         return '<span class="status-normal">Normal</span>';
       }
     }
+    // AI Health Analysis Functions
+    function generateHealthAnalysis() {
+      const container = document.getElementById('healthAnalysisContainer');
+      
+      if (bloodChemRecords.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>No records available for analysis. Add blood chemistry results to get AI-powered health insights!</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Group records by member and get latest for each
+      const memberLatestRecords = {};
+      bloodChemRecords.forEach(record => {
+        if (!memberLatestRecords[record.memberName] || 
+            new Date(record.testDate) > new Date(memberLatestRecords[record.memberName].testDate)) {
+          memberLatestRecords[record.memberName] = record;
+        }
+      });
+
+      // Generate analysis for each member
+      let html = '<div class="health-analysis-grid">';
+      
+      Object.values(memberLatestRecords).forEach(record => {
+        const analysis = analyzeBloodChemistry(record);
+        html += generateMemberAnalysisHTML(record, analysis);
+      });
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function analyzeBloodChemistry(record) {
+      const analysis = {
+        abnormalValues: [],
+        healthScore: 0,
+        totalTests: 0,
+        normalTests: 0,
+        recommendations: [],
+        riskFactors: [],
+        positiveFindings: []
+      };
+
+      // Define test parameters
+      const tests = [
+        { name: 'FBS', value: record.glucose, min: 70, max: 100, unit: 'mg/dL', 
+          highRisk: 'Diabetes risk', lowRisk: 'Hypoglycemia risk' },
+        { name: 'Total Cholesterol', value: record.cholesterol, min: 0, max: 200, unit: 'mg/dL',
+          highRisk: 'Heart disease risk' },
+        { name: 'HDL', value: record.hdl, min: 40, max: 999, unit: 'mg/dL', reverse: true,
+          lowRisk: 'Heart disease risk', highBenefit: 'Good heart protection' },
+        { name: 'LDL', value: record.ldl, min: 0, max: 100, unit: 'mg/dL',
+          highRisk: 'Heart disease risk' },
+        { name: 'Triglycerides', value: record.triglycerides, min: 0, max: 150, unit: 'mg/dL',
+          highRisk: 'Heart disease & pancreatitis risk' },
+        { name: 'Creatinine', value: record.creatinine, min: 0.7, max: 1.3, unit: 'mg/dL',
+          highRisk: 'Kidney function concern', lowRisk: 'Muscle mass concern' },
+        { name: 'Uric Acid', value: record.uricAcid, min: 3.5, max: 7.2, unit: 'mg/dL',
+          highRisk: 'Gout & kidney stone risk' },
+        { name: 'SGPT', value: record.sgpt, min: 7, max: 56, unit: 'U/L',
+          highRisk: 'Liver function concern' },
+        { name: 'HbA1C', value: record.hba1c, min: 4.0, max: 5.6, unit: '%',
+          highRisk: 'Diabetes/Prediabetes' },
+        { name: 'Potassium', value: record.potassium, min: 3.5, max: 5.0, unit: 'mmol/L',
+          highRisk: 'Heart rhythm concern', lowRisk: 'Muscle weakness risk' }
+      ];
+
+      // Analyze each test
+      tests.forEach(test => {
+        if (test.value !== null) {
+          analysis.totalTests++;
+          
+          const isNormal = test.reverse ? 
+            (test.value >= test.min) : 
+            (test.value >= test.min && test.value <= test.max);
+
+          if (isNormal) {
+            analysis.normalTests++;
+            if (test.highBenefit && test.value > test.min + 10) {
+              analysis.positiveFindings.push(`${test.name} is excellent (${test.value} ${test.unit})`);
+            }
+          } else {
+            const status = test.reverse ? 
+              (test.value < test.min ? 'Low' : 'Normal') :
+              (test.value < test.min ? 'Low' : test.value > test.max ? 'High' : 'Normal');
+            
+            analysis.abnormalValues.push({
+              name: test.name,
+              value: test.value,
+              unit: test.unit,
+              status: status,
+              min: test.min,
+              max: test.max
+            });
+
+            // Add risk factors
+            if (status === 'High' && test.highRisk) {
+              analysis.riskFactors.push(test.highRisk);
+            } else if (status === 'Low' && test.lowRisk) {
+              analysis.riskFactors.push(test.lowRisk);
+            }
+          }
+        }
+      });
+
+      // Calculate health score (0-100)
+      if (analysis.totalTests > 0) {
+        analysis.healthScore = Math.round((analysis.normalTests / analysis.totalTests) * 100);
+      }
+
+      // Generate recommendations based on abnormal values
+      analysis.recommendations = generateRecommendations(analysis.abnormalValues, record);
+
+      return analysis;
+    }
+
+    function generateRecommendations(abnormalValues, record) {
+      const recommendations = [];
+
+      abnormalValues.forEach(item => {
+        switch(item.name) {
+          case 'FBS':
+            if (item.status === 'High') {
+              recommendations.push('Monitor blood sugar regularly');
+              recommendations.push('Reduce sugar and refined carbohydrate intake');
+              recommendations.push('Increase physical activity (30 mins daily)');
+              recommendations.push('Consider consulting an endocrinologist');
+            } else {
+              recommendations.push('Eat regular meals to maintain blood sugar');
+              recommendations.push('Include complex carbohydrates in diet');
+            }
+            break;
+
+          case 'Total Cholesterol':
+            if (item.status === 'High') {
+              recommendations.push('Reduce saturated fat intake');
+              recommendations.push('Increase fiber-rich foods (oats, beans)');
+              recommendations.push('Exercise regularly (cardio workouts)');
+              recommendations.push('Consider statin therapy consultation');
+            }
+            break;
+
+          case 'HDL':
+            if (item.status === 'Low') {
+              recommendations.push('Increase healthy fats (olive oil, avocado)');
+              recommendations.push('Regular aerobic exercise');
+              recommendations.push('Quit smoking if applicable');
+              recommendations.push('Moderate alcohol consumption may help');
+            }
+            break;
+
+          case 'LDL':
+            if (item.status === 'High') {
+              recommendations.push('Limit red meat and full-fat dairy');
+              recommendations.push('Eat more fish (omega-3 rich)');
+              recommendations.push('Add plant sterols to diet');
+              recommendations.push('Consider medication if lifestyle changes insufficient');
+            }
+            break;
+
+          case 'Triglycerides':
+            if (item.status === 'High') {
+              recommendations.push('Limit sugar and alcohol intake');
+              recommendations.push('Reduce refined carbohydrates');
+              recommendations.push('Increase omega-3 fatty acids');
+              recommendations.push('Lose weight if overweight');
+            }
+            break;
+
+          case 'Creatinine':
+            if (item.status === 'High') {
+              recommendations.push('Stay well hydrated');
+              recommendations.push('Limit protein intake temporarily');
+              recommendations.push('Avoid NSAIDs (ibuprofen, etc.)');
+              recommendations.push('Consult nephrologist for kidney function check');
+            }
+            break;
+
+          case 'Uric Acid':
+            if (item.status === 'High') {
+              recommendations.push('Limit purine-rich foods (red meat, seafood)');
+              recommendations.push('Avoid alcohol, especially beer');
+              recommendations.push('Stay hydrated (8-10 glasses water daily)');
+              recommendations.push('Maintain healthy weight');
+            }
+            break;
+
+          case 'SGPT':
+            if (item.status === 'High') {
+              recommendations.push('Limit alcohol consumption');
+              recommendations.push('Maintain healthy weight');
+              recommendations.push('Avoid hepatotoxic medications');
+              recommendations.push('Consider hepatitis screening');
+            }
+            break;
+
+          case 'HbA1C':
+            if (item.status === 'High') {
+              recommendations.push('Strict blood sugar control needed');
+              recommendations.push('Follow diabetic diet plan');
+              recommendations.push('Regular exercise routine');
+              recommendations.push('Monitor blood sugar 2-3 times daily');
+              recommendations.push('Consult endocrinologist immediately');
+            }
+            break;
+
+          case 'Potassium':
+            if (item.status === 'High') {
+              recommendations.push('Limit high-potassium foods (bananas, oranges)');
+              recommendations.push('Check kidney function');
+              recommendations.push('Review medications with doctor');
+            } else {
+              recommendations.push('Increase potassium-rich foods');
+              recommendations.push('Consider potassium supplements');
+              recommendations.push('Stay hydrated');
+            }
+            break;
+        }
+      });
+
+      // Add general recommendations
+      if (abnormalValues.length > 0) {
+        recommendations.push('Schedule follow-up test in 3-6 months');
+        recommendations.push('Consult with your healthcare provider');
+      }
+
+      // Remove duplicates
+      return [...new Set(recommendations)];
+    }
+
+    function generateMemberAnalysisHTML(record, analysis) {
+      const healthScoreClass = 
+        analysis.healthScore >= 90 ? 'excellent' :
+        analysis.healthScore >= 75 ? 'good' :
+        analysis.healthScore >= 60 ? 'fair' : 'poor';
+
+      const healthScoreText = 
+        analysis.healthScore >= 90 ? 'Excellent' :
+        analysis.healthScore >= 75 ? 'Good' :
+        analysis.healthScore >= 60 ? 'Fair' : 'Needs Attention';
+
+      let html = `
+        <div class="member-analysis">
+          <h3>👤 ${record.memberName}</h3>
+          <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">
+            Latest Test: ${new Date(record.testDate).toLocaleDateString()}
+          </div>
+          
+          <div class="health-score ${healthScoreClass}">
+            ${healthScoreText}: ${analysis.healthScore}%
+          </div>
+
+          <div class="analysis-section">
+            <h4>📊 Test Results Summary</h4>
+            <div class="analysis-item">
+              <span class="label">Tests Performed:</span>
+              <span class="value">${analysis.totalTests}</span>
+            </div>
+            <div class="analysis-item">
+              <span class="label">Normal Results:</span>
+              <span class="value status-normal">${analysis.normalTests}</span>
+            </div>
+            <div class="analysis-item">
+              <span class="label">Abnormal Results:</span>
+              <span class="value ${analysis.abnormalValues.length > 0 ? 'status-high' : 'status-normal'}">
+                ${analysis.abnormalValues.length}
+              </span>
+            </div>
+          </div>
+      `;
+
+      // Show abnormal values
+      if (analysis.abnormalValues.length > 0) {
+        html += `
+          <div class="analysis-section">
+            <h4>⚠️ Values Needing Attention</h4>
+        `;
+        analysis.abnormalValues.forEach(item => {
+          const statusClass = item.status === 'High' ? 'status-high' : 'status-low';
+          html += `
+            <div class="analysis-item">
+              <span class="label">${item.name}:</span>
+              <span class="value ${statusClass}">
+                ${item.value} ${item.unit} (${item.status})
+              </span>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      // Show positive findings
+      if (analysis.positiveFindings.length > 0) {
+        html += `
+          <div class="analysis-section">
+            <h4>✅ Positive Findings</h4>
+        `;
+        analysis.positiveFindings.forEach(finding => {
+          html += `
+            <div class="analysis-item">
+              <span class="value status-normal">${finding}</span>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      // Show risk factors
+      if (analysis.riskFactors.length > 0) {
+        html += `
+          <div class="analysis-section">
+            <h4>🚨 Health Risk Factors</h4>
+        `;
+        analysis.riskFactors.forEach(risk => {
+          html += `
+            <div class="analysis-item">
+              <span class="value" style="color: #dc2626;">• ${risk}</span>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      // Show recommendations
+      if (analysis.recommendations.length > 0) {
+        html += `
+          <div class="recommendation">
+            <h4>💡 AI-Generated Recommendations</h4>
+            <ul>
+        `;
+        analysis.recommendations.forEach(rec => {
+          html += `<li>${rec}</li>`;
+        });
+        html += `
+            </ul>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="recommendation" style="background: #d1fae5; border-color: #10b981;">
+            <h4 style="color: #065f46;">🎉 Excellent Health Status!</h4>
+            <ul>
+              <li>All values are within normal range</li>
+              <li>Continue maintaining healthy lifestyle</li>
+              <li>Regular check-ups recommended</li>
+            </ul>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+      return html;
+    }
+
 
     function displayRecords() {
       const container = document.getElementById('resultsContainer');
@@ -901,6 +1405,9 @@
 
       html += '</tbody></table></div>';
       container.innerHTML = html;
+      
+      // Generate AI health analysis
+      generateHealthAnalysis();
     }
 
     function editRecord(id) {
