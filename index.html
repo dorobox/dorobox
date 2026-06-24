@@ -766,7 +766,7 @@
         id: Date.now().toString(),
         userId: currentUser.uid,
         userEmail: currentUser.email,
-        memberName: document.getElementById('memberName').value,
+        memberName: currentUser.displayName || currentUser.email.split('@')[0],
         testDate: document.getElementById('testDate').value,
         glucose: parseFloat(document.getElementById('glucose').value) || null,
         cholesterol: parseFloat(document.getElementById('cholesterol').value) || null,
