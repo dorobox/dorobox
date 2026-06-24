@@ -302,19 +302,27 @@
 
     .auth-tab {
       flex: 1;
-      padding: 12px;
-      background: rgba(255,255,255,0.2);
-      border: none;
+      padding: 15px;
+      background: #e0e0e0;
+      border: 2px solid #ccc;
       border-radius: 8px;
-      color: white;
+      color: #666;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
+      font-size: 1.1em;
+    }
+
+    .auth-tab:hover {
+      background: #d0d0d0;
+      border-color: #667eea;
     }
 
     .auth-tab.active {
-      background: white;
-      color: #667eea;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: #667eea;
+      transform: scale(1.05);
     }
 
     .hidden {
