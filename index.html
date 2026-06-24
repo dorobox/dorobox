@@ -508,12 +508,6 @@
             </div>
 
             <div class="form-group">
-              <label for="sgot">SGOT/AST (U/L)</label>
-              <input type="number" id="sgot" step="0.01" placeholder="10-40">
-              <small>Normal: 10-40 U/L</small>
-            </div>
-
-            <div class="form-group">
               <label for="hba1c">HbA1C (%)</label>
               <input type="number" id="hba1c" step="0.01" placeholder="4.0-5.6">
               <small>Normal: 4.0-5.6%</small>
@@ -703,11 +697,11 @@
 
     function updateUserInfo(email) {
       document.getElementById('userInfo').classList.remove('hidden');
-      document.getElementById('userEmail').textContent = '👤 ' + email;
+      const displayName = currentUser.displayName || currentUser.email.split('@')[0];
+      document.getElementById('userEmail').textContent = '👤 ' + displayName;
       
       // Update member name field
       if (currentUser) {
-        const displayName = currentUser.displayName || currentUser.email.split('@')[0];
         document.getElementById('memberName').value = displayName;
       }
     }
@@ -793,7 +787,6 @@
         creatinine: parseFloat(document.getElementById('creatinine').value) || null,
         uricAcid: parseFloat(document.getElementById('uricAcid').value) || null,
         sgpt: parseFloat(document.getElementById('sgpt').value) || null,
-        sgot: parseFloat(document.getElementById('sgot').value) || null,
         hba1c: parseFloat(document.getElementById('hba1c').value) || null,
         potassium: parseFloat(document.getElementById('potassium').value) || null,
         notes: document.getElementById('notes').value,
@@ -872,7 +865,6 @@
       html += '<th>Creatinine</th>';
       html += '<th>Uric Acid</th>';
       html += '<th>SGPT</th>';
-      html += '<th>SGOT</th>';
       html += '<th>HbA1C</th>';
       html += '<th>Potassium</th>';
       html += '<th>Notes</th>';
@@ -891,7 +883,6 @@
         html += `<td>${record.creatinine || '-'} ${getStatus(record.creatinine, 0.7, 1.3)}</td>`;
         html += `<td>${record.uricAcid || '-'} ${getStatus(record.uricAcid, 3.5, 7.2)}</td>`;
         html += `<td>${record.sgpt || '-'} ${getStatus(record.sgpt, 7, 56)}</td>`;
-        html += `<td>${record.sgot || '-'} ${getStatus(record.sgot, 10, 40)}</td>`;
         html += `<td>${record.hba1c || '-'} ${getStatus(record.hba1c, 4.0, 5.6)}</td>`;
         html += `<td>${record.potassium || '-'} ${getStatus(record.potassium, 3.5, 5.0)}</td>`;
         html += `<td>${record.notes || '-'}</td>`;
@@ -941,7 +932,6 @@
       document.getElementById('creatinine').value = record.creatinine || '';
       document.getElementById('uricAcid').value = record.uricAcid || '';
       document.getElementById('sgpt').value = record.sgpt || '';
-      document.getElementById('sgot').value = record.sgot || '';
       document.getElementById('hba1c').value = record.hba1c || '';
       document.getElementById('potassium').value = record.potassium || '';
       document.getElementById('notes').value = record.notes || '';
